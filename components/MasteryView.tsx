@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { Trophy, Star, ArrowRight, RotateCcw } from 'lucide-react';
+import { Trophy, ArrowRight, RotateCcw } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface MasteryViewProps {
