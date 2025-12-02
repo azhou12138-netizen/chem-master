@@ -147,16 +147,6 @@ const App: React.FC = () => {
                    {mistakes.length > 0 && <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{mistakes.length}</span>}
                 </button>
               </div>
-              
-              {/* Capability Levels Visual */}
-              <div className="mt-16 pt-8 border-t border-slate-200/60 flex justify-center gap-8 md:gap-16 opacity-60">
-                 {['L1 基础识记', 'L2 规律理解', 'L3 实验探究', 'L4 综合评价'].map((l, i) => (
-                    <div key={i} className="flex flex-col items-center gap-2">
-                       <div className="w-2 h-2 rounded-full bg-slate-300"></div>
-                       <span className="text-xs font-bold text-slate-400 uppercase">{l}</span>
-                    </div>
-                 ))}
-              </div>
 
             </motion.div>
           )}
