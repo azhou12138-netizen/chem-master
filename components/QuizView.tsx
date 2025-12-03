@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { DifficultyLevel, Question, UserProgress, MistakeRecord } from '../types';
 import { STATIC_QUESTIONS } from '../data/questionBank';
-import { Award, AlertCircle, ArrowRight, CheckCircle2, RotateCcw, AlertTriangle, BookOpen, Layers } from 'lucide-react';
+import { Award, AlertCircle, ArrowRight, CheckCircle2, RotateCcw, AlertTriangle, BookOpen, Layers, Image as ImageIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface QuizViewProps {
@@ -62,8 +62,8 @@ const QuizView: React.FC<QuizViewProps> = ({ initialLevel, onRestart, onMastery,
     if (shuffled.length > 0) {
       setCurrentQuestion(shuffled[0]);
     } else {
-      // Should not happen if data is correct
-      setCurrentQuestion(null);
+      // Handle case with no questions for level (should not happen with full bank)
+      console.warn("No questions found for level " + currentLevel);
     }
   }, [currentLevel]);
 
@@ -100,7 +100,7 @@ const QuizView: React.FC<QuizViewProps> = ({ initialLevel, onRestart, onMastery,
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     // Reset UI
     setIsSubmitted(false);
     setSelectedOption(null);
@@ -121,20 +121,19 @@ const QuizView: React.FC<QuizViewProps> = ({ initialLevel, onRestart, onMastery,
       }
     }
 
+    setQueue(nextQueue);
+    setRetryQueue(nextRetryQueue);
+
     // Check availability
     if (nextQueue.length > 0) {
       // Still have new questions
-      setQueue(nextQueue);
-      setRetryQueue(nextRetryQueue); 
       setCurrentQuestion(nextQueue[0]);
     } else if (nextRetryQueue.length > 0) {
       // No new questions, but have retries
-      setQueue([]);
-      setRetryQueue(nextRetryQueue);
       setIsRetryMode(true);
       setCurrentQuestion(nextRetryQueue[0]);
     } else {
-      // Both empty! Level Complete.
+      // Both queues empty. All done!
       handleLevelComplete();
     }
   };
@@ -195,6 +194,13 @@ const QuizView: React.FC<QuizViewProps> = ({ initialLevel, onRestart, onMastery,
            <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 text-slate-600 rounded-xl text-xs font-bold border border-slate-200 shadow-sm">
              积分: {score}
            </div>
+           
+           <button 
+             onClick={handleLevelComplete}
+             className="px-4 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-700 transition-colors shadow-sm"
+           >
+             完成本级
+           </button>
         </div>
       </div>
 
@@ -224,6 +230,17 @@ const QuizView: React.FC<QuizViewProps> = ({ initialLevel, onRestart, onMastery,
              <h2 className="text-2xl md:text-3xl font-bold text-slate-800 leading-snug tracking-tight relative z-10"
                  dangerouslySetInnerHTML={{ __html: formatChemText(currentQuestion.questionText) }}
              />
+
+             {/* 图片展示区域 */}
+             {currentQuestion.imageUrl && (
+               <div className="mt-8 mb-4 flex justify-center bg-white p-6 rounded-2xl border border-slate-100 shadow-sm relative z-10">
+                 <img 
+                   src={currentQuestion.imageUrl} 
+                   alt="实验装置图" 
+                   className="max-h-64 md:max-h-80 object-contain rounded-lg"
+                 />
+               </div>
+             )}
           </div>
 
           {/* Options Area */}
@@ -235,7 +252,7 @@ const QuizView: React.FC<QuizViewProps> = ({ initialLevel, onRestart, onMastery,
 
                 if (isSubmitted) {
                    if (idx === currentQuestion.correctOptionIndex) {
-                      style = "bg-green-500 border-green-500 text-white shadow-lg shadow-green-200 scale-[1.01]";
+                      style = "bg-green-50 border-green-500 text-white shadow-lg shadow-green-200 scale-[1.01]";
                       icon = <CheckCircle2 className="text-white" size={22} />;
                    } else if (idx === selectedOption) {
                       style = "bg-red-50 border-red-200 text-red-800";
@@ -314,7 +331,7 @@ const QuizView: React.FC<QuizViewProps> = ({ initialLevel, onRestart, onMastery,
                          onClick={handleNext}
                          className="px-10 py-4 bg-slate-900 text-white rounded-full font-bold shadow-xl shadow-slate-200 hover:bg-slate-800 hover:-translate-y-1 transition-all flex items-center gap-3 text-lg"
                       >
-                         {remainingCount <= 0 && isCorrect ? "完成本级" : "继续挑战"} <ArrowRight size={20} />
+                         {remainingCount <= 0 && isCorrect ? "完成本级" : "下一题"} <ArrowRight size={20} />
                       </button>
                    </div>
                 </div>

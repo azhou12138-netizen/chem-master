@@ -28,6 +28,7 @@ export interface Question {
   misconception?: string; 
   learningTip?: string;   
   videoResource?: string; 
+  imageUrl?: string; // 新增字段：用于存储图片的 URL 或 Base64 SVG
 }
 
 export enum DifficultyLevel {
