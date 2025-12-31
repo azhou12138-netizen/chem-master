@@ -106,7 +106,7 @@ const App: React.FC = () => {
               </h1>
               
               <p className="text-xl text-slate-500 mb-12 max-w-2xl mx-auto leading-relaxed">
-                全网首创·基于课程标准化学业质量水平的自适应题库。<br/>
+                全网首创·基于<span className="font-bold text-indigo-600">核心素养</span>的自适应智能题库。<br/>
                 覆盖 <span className="font-bold text-slate-800">硫单质 · 二氧化硫 · 环保与转化</span> 核心知识点。
               </p>
 
@@ -136,7 +136,7 @@ const App: React.FC = () => {
                   className="px-10 py-5 bg-slate-900 text-white rounded-full font-bold text-lg shadow-xl shadow-slate-300 hover:bg-slate-800 hover:-translate-y-1 transition-all flex items-center gap-3 group"
                 >
                   <Sparkles size={20} className="group-hover:animate-spin-slow" />
-                  开始智能诊断
+                  开始素养诊断
                 </button>
                 <button
                    onClick={() => setAppState(AppState.MISTAKE_BOOK)}
@@ -150,7 +150,7 @@ const App: React.FC = () => {
               
               {/* Capability Levels Visual */}
               <div className="mt-16 pt-8 border-t border-slate-200/60 flex justify-center gap-8 md:gap-16 opacity-60">
-                 {['L1 基础识记', 'L2 规律理解', 'L3 实验探究', 'L4 综合评价'].map((l, i) => (
+                 {['基础识记', '规律理解', '实验探究', '综合评价'].map((l, i) => (
                     <div key={i} className="flex flex-col items-center gap-2">
                        <div className="w-2 h-2 rounded-full bg-slate-300"></div>
                        <span className="text-xs font-bold text-slate-400 uppercase">{l}</span>

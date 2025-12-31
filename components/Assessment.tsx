@@ -1,134 +1,147 @@
 
 import React, { useState, useEffect } from 'react';
 import { getAssessmentQuestions } from '../services/geminiService';
-import { DifficultyLevel } from '../types';
+import { DifficultyLevel, Competency } from '../types';
+import { Atom, Zap, Microscope, Scale, HeartHandshake } from 'lucide-react';
 
 interface AssessmentProps {
   onComplete: (startingLevel: DifficultyLevel) => void;
 }
 
 const Assessment: React.FC<AssessmentProps> = ({ onComplete }) => {
-  const [questions, setQuestions] = useState<{ text: string; level: number }[]>([]);
+  const [questions, setQuestions] = useState<{ text: string; competency: Competency }[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   
-  // Track confidence per level: [level]: count of "Yes"
-  const [levelConfidence, setLevelConfidence] = useState<Record<number, number>>({ 1: 0, 2: 0, 3: 0, 4: 0 });
-  const [levelTotal, setLevelTotal] = useState<Record<number, number>>({ 1: 0, 2: 0, 3: 0, 4: 0 });
+  // Track confidence per Competency
+  const [competencyScores, setCompetencyScores] = useState<Record<Competency, number>>({
+    [Competency.MacroMicro]: 0,
+    [Competency.ChangeBalance]: 0,
+    [Competency.EvidenceModel]: 0,
+    [Competency.InquiryInnovation]: 0,
+    [Competency.AttitudeResponsibility]: 0
+  });
 
   useEffect(() => {
     const fetchQs = async () => {
       const data = await getAssessmentQuestions();
-      // Sort by level
-      const sorted = data.questions.sort((a, b) => a.level - b.level);
-      setQuestions(sorted);
-      
-      // Calculate totals per level
-      const totals: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0 };
-      sorted.forEach(q => {
-        totals[q.level] = (totals[q.level] || 0) + 1;
-      });
-      setLevelTotal(totals);
-      
+      // Shuffle questions to mix competencies
+      const shuffled = data.questions.sort(() => Math.random() - 0.5);
+      setQuestions(shuffled);
       setLoading(false);
     };
     fetchQs();
   }, []);
 
+  const formatChemText = (text: string): string => {
+    if (!text) return "";
+    let formatted = text;
+    // 替换运算符
+    formatted = formatted.replace(/\s=\s/g, "<span class='chem-op'>=</span>");
+    formatted = formatted.replace(/\s\+\s/g, "<span class='chem-op'>+</span>");
+    formatted = formatted.replace(/==/g, "<span class='chem-op'>⇌</span>"); 
+    formatted = formatted.replace(/\s⇌\s/g, "<span class='chem-op'>⇌</span>");
+    // 替换离子电荷 (例如 2-)
+    formatted = formatted.replace(/ (\d*[+-])(?=[\s.,;)]|$)/g, "<sup>$1</sup>");
+    // 替换分子式角标 (例如 SO2 -> SO<sub>2</sub>, Ba(NO3)2 -> Ba(NO<sub>3</sub>)<sub>2</sub>)
+    formatted = formatted.replace(/([A-Za-z\)])(\d+)/g, "$1<sub>$2</sub>");
+    return formatted;
+  };
+
   const handleAnswer = (isYes: boolean) => {
     const currentQ = questions[currentIndex];
     
     if (isYes) {
-      setLevelConfidence(prev => ({
+      setCompetencyScores(prev => ({
         ...prev,
-        [currentQ.level]: prev[currentQ.level] + 1
+        [currentQ.competency]: (prev[currentQ.competency] || 0) + 1
       }));
     }
     
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(prev => prev + 1);
     } else {
-      calculateAndFinish(isYes); // Pass last answer to be included in state closure if needed, though we rely on state
+      calculateAndFinish(isYes, currentQ.competency);
     }
   };
 
-  const calculateAndFinish = (lastIsYes: boolean) => {
-    // We need to include the last answer in the calculation. 
-    // Since setState is async, let's calculate locally.
-    const currentQ = questions[currentIndex];
-    const finalConfidence = { ...levelConfidence };
+  const calculateAndFinish = (lastIsYes: boolean, lastComp: Competency) => {
+    const finalScores = { ...competencyScores };
     if (lastIsYes) {
-      finalConfidence[currentQ.level] = (finalConfidence[currentQ.level] || 0) + 1;
+      finalScores[lastComp] = (finalScores[lastComp] || 0) + 1;
     }
 
-    let recommendedLevel = 1;
+    let recommendedLevel = DifficultyLevel.Level4;
 
-    // Logic: 
-    // Check Level 1: If user mastered nearly all (e.g. 100% or > 50%), check Level 2.
-    // Else, Start at 1.
-    // Continue until user fails a level.
-    
-    // Check Level 1
-    const l1Pass = finalConfidence[1] === levelTotal[1]; // Require 100% for Level 1 basics
-    if (l1Pass) {
-       recommendedLevel = 2;
-       
-       // Check Level 2
-       const l2Pass = finalConfidence[2] >= Math.ceil(levelTotal[2] * 0.66); // Require ~66% for L2
-       if (l2Pass) {
-         recommendedLevel = 3;
-         
-         // Check Level 3
-         const l3Pass = finalConfidence[3] >= Math.ceil(levelTotal[3] * 0.66);
-         if (l3Pass) {
-           recommendedLevel = 4;
-           
-           // Check Level 4 - if they know even L4, they are Mastery? 
-           // Let's cap at 4 to let them practice the hardest ones.
-         }
-       }
+    const totalPerComp = questions.filter(q => q.competency === Competency.MacroMicro).length || 2;
+    const threshold = totalPerComp * 0.5;
+
+    if (finalScores[Competency.MacroMicro] < threshold) {
+      recommendedLevel = DifficultyLevel.Level1;
+    }
+    else if (finalScores[Competency.ChangeBalance] < threshold) {
+      recommendedLevel = DifficultyLevel.Level2;
+    }
+    else if (finalScores[Competency.EvidenceModel] < threshold || finalScores[Competency.InquiryInnovation] < threshold) {
+      recommendedLevel = DifficultyLevel.Level3;
+    }
+    else if (finalScores[Competency.AttitudeResponsibility] < threshold) {
+      recommendedLevel = DifficultyLevel.Level4;
     }
 
-    onComplete(recommendedLevel as DifficultyLevel);
+    setTimeout(() => {
+      onComplete(recommendedLevel);
+    }, 500);
   };
 
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-64 space-y-4">
-        <div className="w-12 h-12 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-slate-600 font-medium animate-pulse">正在生成个性化诊断问卷...</p>
+        <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-slate-600 font-medium animate-pulse">正在构建核心素养诊断模型...</p>
       </div>
     );
   }
 
   const currentQ = questions[currentIndex];
   const progressPercent = ((currentIndex) / questions.length) * 100;
-  
-  const levelLabels = {
-    1: "L1 基础识记",
-    2: "L2 规律理解",
-    3: "L3 迁移推断",
-    4: "L4 综合探究"
+
+  const compIcons = {
+    [Competency.MacroMicro]: <Atom size={18} />,
+    [Competency.ChangeBalance]: <Zap size={18} />,
+    [Competency.EvidenceModel]: <Scale size={18} />,
+    [Competency.InquiryInnovation]: <Microscope size={18} />,
+    [Competency.AttitudeResponsibility]: <HeartHandshake size={18} />
+  };
+
+  const compColors = {
+    [Competency.MacroMicro]: "text-blue-600 bg-blue-50 border-blue-200",
+    [Competency.ChangeBalance]: "text-yellow-600 bg-yellow-50 border-yellow-200",
+    [Competency.EvidenceModel]: "text-purple-600 bg-purple-50 border-purple-200",
+    [Competency.InquiryInnovation]: "text-green-600 bg-green-50 border-green-200",
+    [Competency.AttitudeResponsibility]: "text-red-600 bg-red-50 border-red-200"
   };
 
   return (
-    <div className="max-w-2xl mx-auto bg-white p-8 md:p-12 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden">
-      {/* Background Decor */}
-      <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-400 to-amber-500"></div>
+    <div className="max-w-2xl mx-auto bg-white p-8 md:p-12 rounded-3xl shadow-xl shadow-indigo-100/50 border border-slate-100 relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
       
-      <h2 className="text-3xl font-black text-slate-900 mb-8 text-center">学业质量水平前测</h2>
+      <h2 className="text-3xl font-black text-slate-900 mb-2 text-center">核心素养诊断</h2>
+      <p className="text-slate-500 text-center mb-8 text-sm">通过自评，精准定位您的化学学科能力维度</p>
       
-      <div className="w-full bg-slate-100 rounded-full h-3 mb-10 overflow-hidden">
-        <div className="bg-yellow-500 h-full rounded-full transition-all duration-500 ease-out" style={{ width: `${progressPercent}%` }}></div>
+      <div className="w-full bg-slate-100 rounded-full h-2 mb-10 overflow-hidden">
+        <div className="bg-indigo-500 h-full rounded-full transition-all duration-500 ease-out" style={{ width: `${progressPercent}%` }}></div>
       </div>
 
-      <div className="mb-12 text-center relative z-10">
-        <div className="inline-block px-4 py-2 bg-slate-50 text-slate-500 text-xs font-bold rounded-lg mb-6 border border-slate-200 uppercase tracking-widest">
-           {levelLabels[currentQ.level as keyof typeof levelLabels]}
+      <div className="mb-12 text-center relative z-10 min-h-[160px] flex flex-col items-center justify-center">
+        <div className={`inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-full mb-6 border uppercase tracking-wide transition-colors duration-300 ${compColors[currentQ.competency]}`}>
+           {compIcons[currentQ.competency]}
+           {currentQ.competency}
         </div>
-        <h3 className="text-xl md:text-2xl text-slate-800 font-medium leading-relaxed">
-          {currentQ.text}
-        </h3>
+        <h3 
+          className="text-xl md:text-2xl text-slate-800 font-medium leading-relaxed"
+          dangerouslySetInnerHTML={{ __html: formatChemText(currentQ.text) }}
+        />
       </div>
 
       <div className="flex gap-4 justify-center">
@@ -140,14 +153,14 @@ const Assessment: React.FC<AssessmentProps> = ({ onComplete }) => {
         </button>
         <button
           onClick={() => handleAnswer(true)}
-          className="flex-1 max-w-[200px] py-4 px-6 rounded-2xl bg-slate-900 text-white shadow-lg shadow-slate-300 hover:bg-slate-800 hover:-translate-y-1 transition-all font-bold text-lg"
+          className="flex-1 max-w-[200px] py-4 px-6 rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-1 transition-all font-bold text-lg"
         >
           是 / 能做到
         </button>
       </div>
       
       <p className="text-center text-slate-400 text-xs mt-8">
-         题目 {currentIndex + 1} / {questions.length}
+         诊断进度 {currentIndex + 1} / {questions.length}
       </p>
     </div>
   );

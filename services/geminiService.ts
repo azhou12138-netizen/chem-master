@@ -4,27 +4,28 @@ import { DifficultyLevel, Question, Competency } from "../types";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-// Assessment questions strictly focused on S and SO2 properties and PDF Capabilities
-export const getAssessmentQuestions = async (): Promise<{ questions: { text: string; level: number }[] }> => {
+export const getAssessmentQuestions = async (): Promise<{ questions: { text: string; competency: Competency }[] }> => {
   return {
       questions: [
-        // Level 1: Macro Identification
-        { text: "我能准确描述硫单质（颜色、状态）和二氧化硫（气味、溶解性）的物理性质。", level: 1 },
-        { text: "我具有安全意识，知道如何处理实验室洒落的水银(Hg)和闻有毒气体(SO2)的方法。", level: 1 },
+        // 1. 宏观辨识与微观探析
+        { text: "我能从微观角度解释硫元素主要化合价（-2, +4, +6）的形成原因。", competency: Competency.MacroMicro },
+        { text: "我能准确书写硫单质燃烧、SO2 与水反应、SO2 与碱反应的化学方程式及离子方程式。", competency: Competency.MacroMicro },
         
-        // Level 2: Change Conception
-        { text: "我能从化合价角度，解释为什么 SO2 既有氧化性又有还原性，并能列举代表反应。", level: 2 },
-        { text: "我理解 SO2 与水反应的“可逆性”，知道亚硫酸是不稳定的酸。", level: 2 },
-        { text: "我能书写 SO2 与 NaOH 反应生成正盐或酸式盐的化学方程式。", level: 2 },
+        // 2. 变化观念与平衡思想
+        { text: "我能理解 SO2 + H2O ⇌ H2SO3 是可逆反应，并能分析外界条件对该平衡的影响。", competency: Competency.ChangeBalance },
+        { text: "我能根据硫元素的化合价处于中间价态（+4），推断 SO2 既有氧化性又有还原性。", competency: Competency.ChangeBalance },
 
-        // Level 3: Evidence Reasoning & Inquiry
-        { text: "我能根据品红褪色加热复原的现象，区分 SO2 和 Cl2 的漂白原理差异。", level: 3 },
-        { text: "我能设计实验鉴别 SO2 和 CO2，并能解释为什么要先除杂再检验。", level: 3 },
-        { text: "我能解释为什么用向上排空气法收集 SO2，以及如何进行尾气处理。", level: 3 },
+        // 3. 证据推理与模型认知
+        { text: "面对“无色气体使品红褪色”的现象，我能严谨地分析出可能是 SO2、Cl2 或其他物质。", competency: Competency.EvidenceModel },
+        { text: "我能构建“酸性氧化物”模型，并能解释 SO2 与 BaCl2 不反应但与 Ba(NO3)2 反应的反常现象。", competency: Competency.EvidenceModel },
 
-        // Level 4: Social Responsibility & Complex Model
-        { text: "我能评估工业上用生石灰(CaO)进行燃煤脱硫的原理和经济价值。", level: 4 },
-        { text: "我能分析 SO2 在不同环境（如酸性KMnO4、酸性硝酸钡）中表现出的不同性质异常。", level: 4 },
+        // 4. 科学探究与创新意识
+        { text: "我能设计实验装置，在检验 CO2 气体前，彻底除去混有的 SO2 并检验其是否除尽。", competency: Competency.InquiryInnovation },
+        { text: "对于课本未提及的异常实验现象（如 SO2 使石蕊变红不褪色），我有兴趣并能设计对照实验去探究原因。", competency: Competency.InquiryInnovation },
+
+        // 5. 科学态度与社会责任
+        { text: "我了解酸雨的形成机制，并能从化学角度评价工业烟气脱硫方案（如钙基固硫、氨法脱硫）的优缺点。", competency: Competency.AttitudeResponsibility },
+        { text: "我能意识到含硫化合物在生产生活中的“双刃剑”作用（如葡萄酒保鲜与空气污染）。", competency: Competency.AttitudeResponsibility },
       ]
     };
 };
@@ -39,7 +40,6 @@ export const generateChemistryQuestion = async (level: DifficultyLevel): Promise
     - SO2 physical/chemical properties (Acidic oxide, Bleaching, Redox).
     - SO2 identification and separation from CO2.
     - Environmental impact (Acid rain) and Industrial application (Desulfurization).
-    - DO NOT include Concentrated Sulfuric Acid properties (Dehydration/Passivation) unless directly related to S/SO2 conversion.
 
     Requirements:
     1. Return ONLY valid JSON matching this schema:
@@ -49,15 +49,15 @@ export const generateChemistryQuestion = async (level: DifficultyLevel): Promise
       "questionText": "The question stem",
       "options": ["A", "B", "C", "D"],
       "correctOptionIndex": 0-3,
-      "explanation": "Detailed explanation of why the correct answer is right AND why others are wrong.",
+      "explanation": "Detailed explanation.",
       "difficultyLevel": ${level},
       "topicTag": "Specific Tag",
       "competency": "One of: 宏观辨识与微观探析, 变化观念与平衡思想, 证据推理与模型认知, 科学探究与创新意识, 科学态度与社会责任",
-      "misconception": "Diagnosis of why a student might miss this.",
-      "learningTip": "Reference to RenJiao Compulsory 2 textbook.",
-      "videoResource": "Search keyword for Bilibili"
+      "misconception": "Diagnosis.",
+      "learningTip": "Tip.",
+      "videoResource": "Search keyword"
     }
-    2. Ensure chemical formulas are formatted like "SO2" (frontend handles subscripts) but ions like "SO4 2-" (space before charge).
+    2. Format formulas like "SO2" and ions like "SO4 2-".
     3. Language: Simplified Chinese.
   `;
 
@@ -76,7 +76,6 @@ export const generateChemistryQuestion = async (level: DifficultyLevel): Promise
     throw new Error("Empty response");
   } catch (e) {
     console.error(e);
-    // Fallback if AI fails
     return {
        id: "err", 
        questionText: "网络连接不稳定，请重试。",

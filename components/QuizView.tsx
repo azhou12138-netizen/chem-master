@@ -252,13 +252,16 @@ const QuizView: React.FC<QuizViewProps> = ({ initialLevel, onRestart, onMastery,
 
                 if (isSubmitted) {
                    if (idx === currentQuestion.correctOptionIndex) {
-                      style = "bg-green-50 border-green-500 text-white shadow-lg shadow-green-200 scale-[1.01]";
+                      // Correct Answer: Solid Green Background, White Text (High Contrast)
+                      style = "bg-emerald-600 border-emerald-600 text-white shadow-md scale-[1.01] ring-2 ring-emerald-100 font-bold";
                       icon = <CheckCircle2 className="text-white" size={22} />;
                    } else if (idx === selectedOption) {
-                      style = "bg-red-50 border-red-200 text-red-800";
+                      // Wrong Selection: Light Red Background, Dark Red Text
+                      style = "bg-red-50 border-red-200 text-red-800 ring-1 ring-red-100 font-medium";
                       icon = <AlertCircle className="text-red-500" size={22} />;
                    } else {
-                      style = "bg-slate-50 border-slate-100 text-slate-300 opacity-60";
+                      // Other Options: Grayed out
+                      style = "bg-slate-50 border-slate-100 text-slate-400 opacity-70";
                    }
                 } else if (selectedOption === idx) {
                    style = "bg-slate-800 border-slate-800 text-white shadow-lg ring-4 ring-slate-100";

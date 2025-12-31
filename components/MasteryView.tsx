@@ -23,14 +23,6 @@ const MasteryView: React.FC<MasteryViewProps> = ({ score, questionsAnswered, onC
         <div className="relative bg-gradient-to-tr from-yellow-300 to-yellow-500 p-8 rounded-full shadow-2xl border-4 border-white/50">
           <Trophy size={80} className="text-white drop-shadow-md" />
         </div>
-        <motion.div 
-           initial={{ opacity: 0, y: 20 }}
-           animate={{ opacity: 1, y: 0 }}
-           transition={{ delay: 0.5 }}
-           className="absolute -top-2 -right-2 bg-red-500 text-white font-bold px-3 py-1 rounded-full border-2 border-white shadow-lg rotate-12"
-        >
-          Level 4
-        </motion.div>
       </motion.div>
 
       <motion.h2 
@@ -39,16 +31,16 @@ const MasteryView: React.FC<MasteryViewProps> = ({ score, questionsAnswered, onC
         transition={{ delay: 0.2 }}
         className="text-4xl md:text-5xl font-black text-slate-800 mb-4"
       >
-        达成学业质量水平 4！
+        太棒了！通关达成！
       </motion.h2>
 
       <motion.p 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
-        className="text-lg text-slate-600 mb-10 max-w-md"
+        className="text-lg text-slate-600 mb-10 max-w-xl"
       >
-        您在“硫与二氧化硫”单元展现了卓越的综合探究能力，能够解决复杂的化学问题。
+        您已成功完成“硫与二氧化硫”专题的所有核心挑战！扎实的基础和灵活的思维是您最大的收获，请继续保持这份对化学的热情！
       </motion.p>
 
       <motion.div 
@@ -84,7 +76,7 @@ const MasteryView: React.FC<MasteryViewProps> = ({ score, questionsAnswered, onC
           onClick={onContinue}
           className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold shadow-xl hover:shadow-2xl hover:shadow-blue-200 hover:-translate-y-1 transition-all"
         >
-          继续刷题
+          再刷一遍
           <ArrowRight size={20} />
         </button>
       </motion.div>
